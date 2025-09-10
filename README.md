@@ -41,7 +41,7 @@ O foco foi em:
 O projeto está organizado da seguinte forma para garantir a separação de responsabilidades:
 
 ```
-projeto-aulas-musica/
+clave/
 |
 +-- src/
 |   +-- dominio/
@@ -51,8 +51,8 @@ projeto-aulas-musica/
 |       |-- Avaliacao.js
 |       `-- StatusAula.js
 |
-+-- teste.js         (Arquivo para simular e testar o domínio)
-`-- LEIAME.md        (Este arquivo)
++-- main.js          (Arquivo principal para simular e testar o domínio)
+`-- README.md        (Este arquivo)
 ```
 
 ## 7. Modelo de Domínio Detalhado
@@ -90,7 +90,7 @@ Para testar a camada de domínio e ver as regras de negócio em ação, siga os 
 **Passos:**
 
 1.  **Clone o repositório** (ou crie os arquivos e pastas conforme a estrutura acima).
-2.  **Abra o terminal** na pasta raiz do projeto (`projeto-aulas-musica/`).
+2.  **Abra o terminal** na pasta raiz do projeto (`clave/`).
 3.  **Execute o arquivo de simulação** com o seguinte comando:
     ```bash
     node teste.js
