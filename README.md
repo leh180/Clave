@@ -93,7 +93,7 @@ Para testar a camada de domínio e ver as regras de negócio em ação, siga os 
 2.  **Abra o terminal** na pasta raiz do projeto (`clave/`).
 3.  **Execute o arquivo de simulação** com o seguinte comando:
     ```bash
-    node teste.js
+    node main.js
     ```
 4.  O terminal exibirá uma simulação passo a passo, mostrando a criação de professores e alunos, o agendamento de uma aula, a mudança de seu status e o cálculo da média de avaliações de um professor.
 
