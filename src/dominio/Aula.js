@@ -46,6 +46,8 @@ class Aula {
     obterAluno() {
         return this.#aluno;
     }
+
+    
 }
 
 module.exports = Aula;
