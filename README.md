@@ -49,7 +49,8 @@ clave-projeto/
 |
 +-- teste.js         (Script de simulação e teste)
 +-- package.json
-`-- LEIAME.md
++-- package-lock.json
+`-- README.md
 ```
 
 ## 5. Modelo de Domínio Detalhado
