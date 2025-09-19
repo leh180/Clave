@@ -1,21 +1,30 @@
-const mysql = require('mysql2/promise');
+// src/persistencia/database.js
+const { Pool } = require('pg');
 
-class Database {
-    static #instance = null; // Instância única (Singleton)
+class database {
+    static #pool = null;
 
-    static async getConnection() {
-        if (!Database.#instance) {
-            // Se não existe, cria uma nova conexão
-            Database.#instance = await mysql.createConnection({
+    static getPool() {
+        if (!this.#pool) {
+            this.#pool = new Pool({
+                user: 'postgres',
                 host: 'localhost',
-                user: 'seu_usuario',
-                password: 'sua_senha',
-                database: 'sistema_aulas'
+                database: 'clave_db',
+                password: 'sua_senha', // SUA SENHA AQUI
+                port: 5432,
             });
-            console.log('Conexão com o banco estabelecida!');
+            console.log('Pool de conexões com o PostgreSQL estabelecido!');
         }
-        return Database.#instance;
+        return this.#pool;
+    }
+
+    static async closePool() {
+        if (this.#pool) {
+            await this.#pool.end();
+            console.log('Pool de conexões com o banco fechado.');
+            this.#pool = null;
+        }
     }
 }
 
-module.exports = Database;
+module.exports = database;

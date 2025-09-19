@@ -1,165 +1,79 @@
 const Database = require('./database');
 const Aula = require('../dominio/Aula');
-const StatusAula = require('../dominio/StatusAula');
+const Aluno = require('../dominio/Aluno');
+const Professor = require('../dominio/Professor');
 
 class AulaRepository {
 
     // CREATE - Salvar uma nova aula
     async salvar(aula) {
-        const connection = await Database.getConnection();
-        const [result] = await connection.execute(
-            'INSERT INTO aulas (professor_id, aluno_id, data_hora, valor_acordado, status) VALUES (?, ?, ?, ?, ?)',
-            [
-                aula.obterProfessor().obterId(),
-                aula.obterAluno().obterId(),
-                aula.obterDataHora().toISOString().slice(0, 19).replace('T', ' '),
-                aula.obterValorAcordado(),
-                aula.obterStatus()
-            ]
-        );
-        return result.insertId;
+        const pool = Database.getPool();
+        const sql = 'INSERT INTO aula (aluno_id, professor_id, inicio, fim, status_id, modalidade, valor_acordado) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id';
+        const values = [
+            aula.obterAluno().obterId(),
+            aula.obterProfessor().obterId(),
+            aula.obterInicio(), // Supondo que o objeto Date seja passado
+            aula.obterFim(),
+            aula.obterStatusId(), // Supondo que você tenha um obterStatusId()
+            aula.obterModalidade(),
+            aula.obterValorAcordado()
+        ];
+        
+        const resultado = await pool.query(sql, values);
+        return resultado.rows[0].id;
     }
 
     // READ - Buscar aula por ID
     async buscarPorId(id) {
-        const connection = await Database.getConnection();
-        const [rows] = await connection.execute(
-            `SELECT a.*,
-                    prof.nome as professor_nome,
-                    aluno.nome as aluno_nome
-            FROM aulas a
-            INNER JOIN professores prof ON a.professor_id = prof.id
-            INNER JOIN alunos aluno ON a.aluno_id = aluno.id
-            WHERE a.id = ?`,
-            [id]
-        );
+        const pool = Database.getPool();
+        const sql = `
+            SELECT a.*, al.nome AS aluno_nome, p.nome AS professor_nome, s.nome AS status_nome
+            FROM aula a
+            JOIN aluno al ON al.id = a.aluno_id
+            JOIN professor p ON p.id = a.professor_id
+            JOIN status_aula s ON s.id = a.status_id
+            WHERE a.id = $1
+        `;
+        const { rows } = await pool.query(sql, [id]);
 
         if (rows.length === 0) return null;
 
         return this.#mapearParaObjeto(rows[0]);
     }
 
-    // READ - Buscar aulas por professor
-    async buscarPorProfessor(professorId) {
-        const connection = await Database.getConnection();
-        const [rows] = await connection.execute(
-            `SELECT a.*, prof.nome as professor_nome, aluno.nome as aluno_nome
-            FROM aulas a
-            INNER JOIN professores prof ON a.professor_id = prof.id
-            INNER JOIN alunos aluno ON a.aluno_id = aluno.id
-            WHERE a.professor_id = ?
-            ORDER BY a.data_hora DESC`,
-            [professorId]
-        );
-
-        return rows.map(row => this.#mapearParaObjeto(row));
-    }
-
-    // READ - Buscar aulas por aluno
-    async buscarPorAluno(alunoId) {
-        const connection = await Database.getConnection();
-        const [rows] = await connection.execute(
-            `SELECT a.*, prof.nome as professor_nome, aluno.nome as aluno_nome
-            FROM aulas a
-            INNER JOIN professores prof ON a.professor_id = prof.id
-            INNER JOIN alunos aluno ON a.aluno_id = aluno.id
-            WHERE a.aluno_id = ?
-            ORDER BY a.data_hora DESC`,
-            [alunoId]
-        );
-
-        return rows.map(row => this.#mapearParaObjeto(row));
-    }
-
-    // READ - Buscar aulas por status
-    async buscarPorStatus(status) {
-        const connection = await Database.getConnection();
-        const [rows] = await connection.execute(
-            `SELECT a.*, prof.nome as professor_nome, aluno.nome as aluno_nome
-            FROM aulas a
-            INNER JOIN professores prof ON a.professor_id = prof.id
-            INNER JOIN alunos aluno ON a.aluno_id = aluno.id
-            WHERE a.status = ?
-            ORDER BY a.data_hora DESC`,
-            [status]
-        );
-
-        return rows.map(row => this.#mapearParaObjeto(row));
-    }
-
-    // UPDATE - Atualizar status da aula (método genérico)
-    async atualizarStatus(id, novoStatus) {
-        const connection = await Database.getConnection();
-        await connection.execute(
-            'UPDATE aulas SET status = ? WHERE id = ?',
-            [novoStatus, id]
-        );
-    }
-
-    // Métodos específicos para ações de negócio
-    async confirmarAula(id) {
-        await this.atualizarStatus(id, StatusAula.CONFIRMADA);
-    }
-
-    async cancelarPorAluno(id) {
-        await this.atualizarStatus(id, StatusAula.CANCELADA_PELO_ALUNO);
-    }
-
-    async cancelarPorProfessor(id) {
-        await this.atualizarStatus(id, StatusAula.CANCELADA_PELO_PROFESSOR);
-    }
-
-    async marcarComoRealizada(id) {
-        await this.atualizarStatus(id, StatusAula.REALIZADA);
-    }
-
-    // UPDATE - Atualizar dados completos da aula
-    async atualizar(aula) {
-        const connection = await Database.getConnection();
-        await connection.execute(
-            'UPDATE aulas SET professor_id = ?, aluno_id = ?, data_hora = ?, valor_acordado = ?, status = ? WHERE id = ?',
-            [
-                aula.obterProfessor().obterId(),
-                aula.obterAluno().obterId(),
-                aula.obterDataHora().toISOString().slice(0, 19).replace('T', ' '),
-                aula.obterValorAcordado(),
-                aula.obterStatus(),
-                aula.obterId()
-            ]
-        );
+    // UPDATE - Atualizar status de uma aula
+    async atualizarStatus(id, statusId) {
+        const pool = Database.getPool();
+        const sql = 'UPDATE aula SET status_id = $1 WHERE id = $2';
+        await pool.query(sql, [statusId, id]);
     }
 
     // DELETE - Deletar aula
     async deletar(id) {
-        const connection = await Database.getConnection();
-        await connection.execute(
-            'DELETE FROM aulas WHERE id = ?',
-            [id]
-        );
+        const pool = Database.getPool();
+        const sql = 'DELETE FROM aula WHERE id = $1';
+        await pool.query(sql, [id]);
     }
 
     // Método privado para mapear dados do banco para objeto Aula
     #mapearParaObjeto(row) {
-        const professor = {
-            obterId: () => row.professor_id,
-            obterNome: () => row.professor_nome
-        };
-
-        const aluno = {
-            obterId: () => row.aluno_id,
-            obterNome: () => row.aluno_nome
-        };
-
+        const aluno = new Aluno(row.aluno_id, row.aluno_nome, null);
+        const professor = new Professor(row.professor_id, row.professor_nome, null, null, null);
+        
+        // Ajuste o construtor da Aula conforme necessário
         const aula = new Aula(
             row.id,
-            professor,
             aluno,
-            row.data_hora,
+            professor,
+            row.inicio,
+            row.fim,
+            row.status_id,
+            row.modalidade,
             parseFloat(row.valor_acordado)
         );
-
-        // Definir o status atual (já que o construtor sempre inicia como SOLICITADA)
-        aula.obterStatus = () => row.status;
+        
+        // Adicionando propriedade extra para o nome do status
+        aula.statusNome = row.status_nome;
 
         return aula;
     }

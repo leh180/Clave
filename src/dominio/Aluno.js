@@ -26,8 +26,14 @@ class Aluno {
     obterNome() {
         return this.#nome;
     }
+    obterEmail(){
+        return this.#email;
+    }
     obterAulasAgendadas() {
         return this.#aulasAgendadas;
+    }
+    alterarNome(novoNome){
+        this.#nome = novoNome;
     }
 }
 

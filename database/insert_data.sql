@@ -1,57 +1,54 @@
+-- Insere os status de aula baseados no Enum StatusAula.js
+-- ON CONFLICT garante que não haverá erro se o script for rodado mais de uma vez
 INSERT INTO status_aula (id, nome) VALUES
-    (1, 'solicitada'),
-    (2, 'aceita'),
-    (3, 'concluida'),
-    (4, 'cancelada')
-ON CONFLICT (id) DO NOTHING;
+    (1, 'SOLICITADA'),
+    (2, 'CONFIRMADA'),
+    (3, 'CANCELADA_PELO_ALUNO'),
+    (4, 'CANCELADA_PELO_PROFESSOR'),
+    (5, 'REALIZADA')
+ON CONFLICT (id) DO UPDATE SET nome = EXCLUDED.nome;
 
--- Alunos
-INSERT INTO aluno (nome, email, telefone) VALUES
-    ('Pedro Gaioso', 'gaioso@example.com', '(31) 99999-1111'),
-    ('Rafael Souza', 'rafael@example.com', '(31) 98888-2222')
+-- Insere Alunos de exemplo
+INSERT INTO aluno (nome, email) VALUES
+    ('Bruna Kutova', 'bruna@gmail.com'),
+    ('Rafael Souza', 'rafael@gmail.com')
 ON CONFLICT (email) DO NOTHING;
 
--- Professores
-INSERT INTO professor (nome, email, instrumento, preco_hora) VALUES
-    ('Carlos Lima', 'carlos.lima@example.com', 'Violão', 120.00),
-    ('Bianca Torres', 'bianca.torres@example.com', 'Piano', 150.00)
+-- Insere Professores de exemplo
+INSERT INTO professor (nome, email, biografia, valor_base_aula) VALUES
+    ('Daniel Augusto', 'daniel.augusto@gmail.com', 'Músico experiente com 10 anos de carreira, especializado em violão clássico e popular.', 120.00),
+    ('Melina Peixoto', 'mel.peixoto@gmail.com', 'Pianista formada pela UEMG, com foco em técnica e teoria musical para iniciantes.', 150.00)
 ON CONFLICT (email) DO NOTHING;
 
--- Uma aula de exemplo
-WITH a AS (
-    SELECT id AS aluno_id FROM aluno WHERE email='gaioso@example.com'
-),
-p AS (
-    SELECT id AS professor_id FROM professor WHERE email='carlos.lima@example.com'
+-- Insere uma Aula de exemplo
+WITH vars AS (
+    SELECT
+        (SELECT id FROM aluno WHERE email = 'bruna@gmail.com') AS aluno_id,
+        (SELECT id FROM professor WHERE email = 'daniel.augusto@gmail.com') AS professor_id,
+        (SELECT id FROM status_aula WHERE nome = 'CONFIRMADA') AS status_id
 )
-INSERT INTO aula (aluno_id, professor_id, inicio, fim, status_id, modalidade, valor_acordado)
-SELECT a.aluno_id, p.professor_id,
-    DATE_TRUNC('day', NOW()) + INTERVAL '2 day' + INTERVAL '18 hour',
-    DATE_TRUNC('day', NOW()) + INTERVAL '2 day' + INTERVAL '19 hour',
-    1, 'online', 120.00
-FROM a, p
+INSERT INTO aula (aluno_id, professor_id, data_hora, status_id, modalidade, valor_acordado)
+SELECT
+    v.aluno_id,
+    v.professor_id,
+    NOW() + INTERVAL '2 days',
+    v.status_id,
+    'online',
+    120.00
+FROM vars v
 ON CONFLICT DO NOTHING;
 
--- SELECT: listar todos os alunos
-SELECT * FROM aluno;
-
--- SELECT com JOIN: aulas com professor e status
-SELECT a.id, al.nome AS aluno, p.nome AS professor, a.inicio, a.fim, s.nome AS status
-FROM aula a
-JOIN aluno al ON al.id = a.aluno_id
-JOIN professor p ON p.id = a.professor_id
-JOIN status_aula s ON s.id = a.status_id;
-
--- UPDATE: atualizar telefone de um aluno
-UPDATE aluno
-SET telefone = '(31) 97777-3333'
-WHERE email = 'gaioso@example.com';
-
--- UPDATE: alterar status de uma aula
-UPDATE aula
-SET status_id = 2
-WHERE id = (SELECT id FROM aula LIMIT 1);
-
--- DELETE: remover uma avaliação de teste
-DELETE FROM avaliacao
-WHERE comentario LIKE '%teste%';
+-- Insere uma Avaliação de exemplo
+WITH vars AS (
+    SELECT
+        (SELECT id FROM aluno WHERE email = 'bruna@gmail.com') AS aluno_id,
+        (SELECT id FROM professor WHERE email = 'daniel.augusto@gmail.com') AS professor_id
+)
+INSERT INTO avaliacao (aluno_id, professor_id, nota, comentario)
+SELECT
+    v.aluno_id,
+    v.professor_id,
+    5,
+    'O professor Daniel é excelente! Muito paciente e didático.'
+FROM vars v
+ON CONFLICT DO NOTHING;
