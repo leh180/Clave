@@ -1,5 +1,5 @@
 const Database = require('./database');
-const StatusAula = require('./StatusAula');
+const StatusAula = require('../dominio/StatusAula');
 
 class StatusAulaManager {
     
@@ -18,9 +18,9 @@ class StatusAulaManager {
         const connection = await Database.getConnection();
         const [rows] = await connection.execute(
             `SELECT status, COUNT(*) as quantidade
-             FROM aulas
-             GROUP BY status
-             ORDER BY quantidade DESC`
+            FROM aulas
+            GROUP BY status
+            ORDER BY quantidade DESC`
         );
         
         return rows;
@@ -31,9 +31,9 @@ class StatusAulaManager {
         const connection = await Database.getConnection();
         const [rows] = await connection.execute(
             `SELECT status, COUNT(*) as quantidade
-             FROM aulas
-             WHERE professor_id = ?
-             GROUP BY status`,
+            FROM aulas
+            WHERE professor_id = ?
+            GROUP BY status`,
             [professorId]
         );
         
@@ -45,9 +45,9 @@ class StatusAulaManager {
         const connection = await Database.getConnection();
         const [rows] = await connection.execute(
             `SELECT status, COUNT(*) as quantidade
-             FROM aulas
-             WHERE aluno_id = ?
-             GROUP BY status`,
+            FROM aulas
+            WHERE aluno_id = ?
+            GROUP BY status`,
             [alunoId]
         );
         
@@ -77,15 +77,15 @@ class StatusAulaManager {
         const connection = await Database.getConnection();
         
         const [rows] = await connection.execute(
-            `SELECT a.*, 
+            `SELECT a.*,
                     prof.nome as professor_nome,
                     aluno.nome as aluno_nome
-             FROM aulas a
-             INNER JOIN professores prof ON a.professor_id = prof.id
-             INNER JOIN alunos aluno ON a.aluno_id = aluno.id
-             WHERE a.status = ?
-             ORDER BY a.data_hora DESC
-             LIMIT ? OFFSET ?`,
+            FROM aulas a
+            INNER JOIN professores prof ON a.professor_id = prof.id
+            INNER JOIN alunos aluno ON a.aluno_id = aluno.id
+            WHERE a.status = ?
+            ORDER BY a.data_hora DESC
+            LIMIT ? OFFSET ?`,
             [status, limite, offset]
         );
         
@@ -110,8 +110,8 @@ class StatusAulaManager {
         const connection = await Database.getConnection();
         const [rows] = await connection.execute(
             `SELECT * FROM historico_status_aula
-             WHERE aula_id = ?
-             ORDER BY data_mudanca DESC`,
+            WHERE aula_id = ?
+            ORDER BY data_mudanca DESC`,
             [aulaId]
         );
         

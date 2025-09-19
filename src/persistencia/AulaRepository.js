@@ -1,9 +1,9 @@
 const Database = require('./database');
-const Aula = require('./Aula');
-const StatusAula = require('./StatusAula');
+const Aula = require('../dominio/Aula');
+const StatusAula = require('../dominio/StatusAula');
 
 class AulaRepository {
-    
+
     // CREATE - Salvar uma nova aula
     async salvar(aula) {
         const connection = await Database.getConnection();
@@ -24,18 +24,18 @@ class AulaRepository {
     async buscarPorId(id) {
         const connection = await Database.getConnection();
         const [rows] = await connection.execute(
-            `SELECT a.*, 
+            `SELECT a.*,
                     prof.nome as professor_nome,
                     aluno.nome as aluno_nome
-             FROM aulas a
-             INNER JOIN professores prof ON a.professor_id = prof.id
-             INNER JOIN alunos aluno ON a.aluno_id = aluno.id
-             WHERE a.id = ?`,
+            FROM aulas a
+            INNER JOIN professores prof ON a.professor_id = prof.id
+            INNER JOIN alunos aluno ON a.aluno_id = aluno.id
+            WHERE a.id = ?`,
             [id]
         );
-        
+
         if (rows.length === 0) return null;
-        
+
         return this.#mapearParaObjeto(rows[0]);
     }
 
@@ -44,14 +44,14 @@ class AulaRepository {
         const connection = await Database.getConnection();
         const [rows] = await connection.execute(
             `SELECT a.*, prof.nome as professor_nome, aluno.nome as aluno_nome
-             FROM aulas a
-             INNER JOIN professores prof ON a.professor_id = prof.id
-             INNER JOIN alunos aluno ON a.aluno_id = aluno.id
-             WHERE a.professor_id = ?
-             ORDER BY a.data_hora DESC`,
+            FROM aulas a
+            INNER JOIN professores prof ON a.professor_id = prof.id
+            INNER JOIN alunos aluno ON a.aluno_id = aluno.id
+            WHERE a.professor_id = ?
+            ORDER BY a.data_hora DESC`,
             [professorId]
         );
-        
+
         return rows.map(row => this.#mapearParaObjeto(row));
     }
 
@@ -60,14 +60,14 @@ class AulaRepository {
         const connection = await Database.getConnection();
         const [rows] = await connection.execute(
             `SELECT a.*, prof.nome as professor_nome, aluno.nome as aluno_nome
-             FROM aulas a
-             INNER JOIN professores prof ON a.professor_id = prof.id
-             INNER JOIN alunos aluno ON a.aluno_id = aluno.id
-             WHERE a.aluno_id = ?
-             ORDER BY a.data_hora DESC`,
+            FROM aulas a
+            INNER JOIN professores prof ON a.professor_id = prof.id
+            INNER JOIN alunos aluno ON a.aluno_id = aluno.id
+            WHERE a.aluno_id = ?
+            ORDER BY a.data_hora DESC`,
             [alunoId]
         );
-        
+
         return rows.map(row => this.#mapearParaObjeto(row));
     }
 
@@ -76,14 +76,14 @@ class AulaRepository {
         const connection = await Database.getConnection();
         const [rows] = await connection.execute(
             `SELECT a.*, prof.nome as professor_nome, aluno.nome as aluno_nome
-             FROM aulas a
-             INNER JOIN professores prof ON a.professor_id = prof.id
-             INNER JOIN alunos aluno ON a.aluno_id = aluno.id
-             WHERE a.status = ?
-             ORDER BY a.data_hora DESC`,
+            FROM aulas a
+            INNER JOIN professores prof ON a.professor_id = prof.id
+            INNER JOIN alunos aluno ON a.aluno_id = aluno.id
+            WHERE a.status = ?
+            ORDER BY a.data_hora DESC`,
             [status]
         );
-        
+
         return rows.map(row => this.#mapearParaObjeto(row));
     }
 
@@ -140,16 +140,16 @@ class AulaRepository {
 
     // Método privado para mapear dados do banco para objeto Aula
     #mapearParaObjeto(row) {
-        const professor = { 
-            obterId: () => row.professor_id, 
-            obterNome: () => row.professor_nome 
+        const professor = {
+            obterId: () => row.professor_id,
+            obterNome: () => row.professor_nome
         };
-        
-        const aluno = { 
-            obterId: () => row.aluno_id, 
-            obterNome: () => row.aluno_nome 
+
+        const aluno = {
+            obterId: () => row.aluno_id,
+            obterNome: () => row.aluno_nome
         };
-        
+
         const aula = new Aula(
             row.id,
             professor,
@@ -157,10 +157,10 @@ class AulaRepository {
             row.data_hora,
             parseFloat(row.valor_acordado)
         );
-        
+
         // Definir o status atual (já que o construtor sempre inicia como SOLICITADA)
         aula.obterStatus = () => row.status;
-        
+
         return aula;
     }
 }

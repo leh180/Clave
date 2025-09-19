@@ -1,5 +1,5 @@
 const Database = require('./database');
-const Professor = require('./Professor');
+const Professor = require('../dominio/Professor');
 
 class ProfessorRepository {
     
@@ -63,7 +63,7 @@ class ProfessorRepository {
         const connection = await Database.getConnection();
         const [rows] = await connection.execute('SELECT * FROM professores ORDER BY nome');
         
-        return rows.map(row => 
+        return rows.map(row =>
             new Professor(
                 row.id,
                 row.nome,
@@ -94,7 +94,7 @@ class ProfessorRepository {
         
         const [rows] = await connection.execute(query, params);
         
-        return rows.map(row => 
+        return rows.map(row =>
             new Professor(
                 row.id,
                 row.nome,
@@ -170,13 +170,13 @@ class ProfessorRepository {
     async buscarProfessorComAvaliacoes(professorId) {
         const connection = await Database.getConnection();
         const [rows] = await connection.execute(
-            `SELECT p.*, 
+            `SELECT p.*,
                     AVG(av.nota) as nota_media,
                     COUNT(av.id) as total_avaliacoes
-             FROM professores p
-             LEFT JOIN avaliacoes av ON p.id = av.professor_avaliado_id
-             WHERE p.id = ?
-             GROUP BY p.id`,
+            FROM professores p
+            LEFT JOIN avaliacoes av ON p.id = av.professor_avaliado_id
+            WHERE p.id = ?
+            GROUP BY p.id`,
             [professorId]
         );
         

@@ -13,7 +13,7 @@ class Aluno {
 
     /**
      * Adiciona uma nova aula à lista de aulas do aluno.
-     * @param {Aula} aula 
+     * @param {Aula} aula
      */
     adicionarAula(aula) {
         this.#aulasAgendadas.push(aula);

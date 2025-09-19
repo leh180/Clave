@@ -1,5 +1,4 @@
-//const Database = require('./database');
-const Aluno = require('./Aluno'); // Importa sua classe Aluno
+const Aluno = require('../dominio/Aluno'); // Importa sua classe Aluno
 
 class AlunoRepository {
     
@@ -36,7 +35,7 @@ class AlunoRepository {
         const connection = await Database.getConnection();
         const [rows] = await connection.execute('SELECT * FROM alunos');
         
-        return rows.map(row => 
+        return rows.map(row =>
             new Aluno(row.id, row.nome, row.email)
         );
     }

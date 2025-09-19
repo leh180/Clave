@@ -1,5 +1,4 @@
-//const Database = require('./database');
-const Avaliacao = require('./Avaliacao');
+const Avaliacao = require('../dominio/Avaliacao');
 
 class AvaliacaoRepository {
     
@@ -22,13 +21,13 @@ class AvaliacaoRepository {
     async buscarPorId(id) {
         const connection = await Database.getConnection();
         const [rows] = await connection.execute(
-            `SELECT av.*, 
-                    a.nome as autor_nome, 
+            `SELECT av.*,
+                    a.nome as autor_nome,
                     p.nome as professor_nome
-             FROM avaliacoes av
-             INNER JOIN alunos a ON av.autor_id = a.id
-             INNER JOIN professores p ON av.professor_avaliado_id = p.id
-             WHERE av.id = ?`,
+            FROM avaliacoes av
+            INNER JOIN alunos a ON av.autor_id = a.id
+            INNER JOIN professores p ON av.professor_avaliado_id = p.id
+            WHERE av.id = ?`,
             [id]
         );
         
@@ -42,10 +41,10 @@ class AvaliacaoRepository {
         const connection = await Database.getConnection();
         const [rows] = await connection.execute(
             `SELECT av.*, a.nome as autor_nome, p.nome as professor_nome
-             FROM avaliacoes av
-             INNER JOIN alunos a ON av.autor_id = a.id
-             INNER JOIN professores p ON av.professor_avaliado_id = p.id
-             WHERE av.professor_avaliado_id = ?`,
+            FROM avaliacoes av
+            INNER JOIN alunos a ON av.autor_id = a.id
+            INNER JOIN professores p ON av.professor_avaliado_id = p.id
+            WHERE av.professor_avaliado_id = ?`,
             [professorId]
         );
         
@@ -57,9 +56,9 @@ class AvaliacaoRepository {
         const connection = await Database.getConnection();
         const [rows] = await connection.execute(
             `SELECT av.*, a.nome as autor_nome, p.nome as professor_nome
-             FROM avaliacoes av
-             INNER JOIN alunos a ON av.autor_id = a.id
-             INNER JOIN professores p ON av.professor_avaliado_id = p.id`
+            FROM avaliacoes av
+            INNER JOIN alunos a ON av.autor_id = a.id
+            INNER JOIN professores p ON av.professor_avaliado_id = p.id`
         );
         
         return rows.map(row => this.#mapearParaObjeto(row));
