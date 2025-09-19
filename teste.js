@@ -1,41 +1,70 @@
-// Importa as classes que criamos
-const Professor = require('./src/dominio/Professor');
 const Aluno = require('./src/dominio/Aluno');
-const Aula = require('./src/dominio/Aula');
-const Avaliacao = require('./src/dominio/Avaliacao');
+const Professor = require('./src/dominio/Professor');
+const AlunoRepositorio = require('./src/persistencia/AlunoRepositorio');
+const ProfessorRepositorio = require('./src/persistencia/ProfessorRepositorio');
+const Database = require('./src/persistencia/database');
 
-console.log("--- Iniciando simulação da plataforma ---");
+// A função principal precisa ser assíncrona para usar 'await'
+async function main() {
+    console.log("--- INICIANDO TESTES DA CAMADA DE PERSISTÊNCIA ---");
 
-// 1. Criando um professor e um aluno
-const profCarlos = new Professor(1, "Carlos Santana", "carlos@email.com", "Lenda da guitarra", 150.00);
-const alunoJoao = new Aluno(101, "João", "joao@email.com");
+    try {
+        // Instanciando os repositórios
+        const alunoRepo = new AlunoRepositorio();
+        const professorRepo = new ProfessorRepositorio();
 
-console.log(`Professor criado: ${profCarlos.obterNome()}`);
-console.log(`Aluno criado: ${alunoJoao.obterNome()}`);
+        // 1. TESTE DE CRIAÇÃO (CREATE)
+        console.log("\n[TESTE] Criando um novo aluno...");
+        const novoAluno = new Aluno(null, 'Lucas Gomes', 'lucas.gomes@email.com'); // ID é null pois será gerado pelo DB
+        const alunoId = await alunoRepo.salvar(novoAluno);
+        console.log(`> Aluno "Lucas Gomes" criado com sucesso! ID: ${alunoId}`);
 
-// 2. Aluno solicita uma aula
-const aulaDeGuitarra = new Aula(1, profCarlos, alunoJoao, "2025-10-20T10:00:00", 150.00);
-alunoJoao.adicionarAula(aulaDeGuitarra);
-profCarlos.adicionarAulaNaAgenda(aulaDeGuitarra);
-console.log(`\nAula solicitada. Status atual: ${aulaDeGuitarra.obterStatus()}`);
+        // 2. TESTE DE LEITURA (READ)
+        console.log("\n[TESTE] Buscando o aluno recém-criado pelo ID...");
+        const alunoEncontrado = await alunoRepo.buscarPorId(alunoId);
+        if (alunoEncontrado) {
+            console.log(`> Encontrado: ${alunoEncontrado.obterNome()} (Email: ${alunoEncontrado.obterEmail()})`);
+        } else {
+            console.error("> ERRO: Aluno não encontrado!");
+        }
 
-// 3. Professor confirma a aula
-aulaDeGuitarra.confirmar();
-console.log(`Status da aula após confirmação: ${aulaDeGuitarra.obterStatus()}`);
+        // 3. TESTE DE ATUALIZAÇÃO (UPDATE)
+        console.log("\n[TESTE] Atualizando o nome do aluno...");
+        alunoEncontrado.alterarNome("Lucas Gabriel Almeida Gomes"); // Supondo que você tenha um setter no domínio
+        await alunoRepo.atualizar(alunoEncontrado);
+        const alunoAtualizado = await alunoRepo.buscarPorId(alunoId);
+        console.log(`> Nome atualizado para: ${alunoAtualizado.obterNome()}`);
 
-// 4. Aluno faz uma avaliação após a aula
-const avaliacao1 = new Avaliacao(1, alunoJoao, profCarlos, 5, "Aula fantástica, muito didático!");
-profCarlos.adicionarAvaliacao(avaliacao1);
-console.log(`\n${alunoJoao.obterNome()} avaliou o professor ${profCarlos.obterNome()} com nota ${avaliacao1.obterNota()}`);
 
-// 5. Outro aluno avalia o mesmo professor
-const alunoPedro = new Aluno(102, "Pedro", "pedro@email.com");
-const avaliacao2 = new Avaliacao(2, alunoPedro, profCarlos, 4, "Muito bom!");
-profCarlos.adicionarAvaliacao(avaliacao2);
-console.log(`${alunoPedro.obterNome()} avaliou o professor ${profCarlos.obterNome()} com nota ${avaliacao2.obterNota()}`);
+        // 4. TESTE DE LEITURA DE TODOS (READ ALL)
+        console.log("\n[TESTE] Buscando todos os professores...");
+        const todosProfessores = await professorRepo.buscarTodos();
+        console.log(`> Total de professores no banco: ${todosProfessores.length}`);
+        todosProfessores.forEach(prof => console.log(`  - ${prof.obterNome()}`));
 
-// 6. Verificando a média do professor
-const mediaDoProfessor = profCarlos.calcularNotaMedia();
-console.log(`\nA nota média do professor ${profCarlos.obterNome()} é: ${mediaDoProfessor.toFixed(2)}`);
+        
+        // 5. TESTE DE EXCLUSÃO (DELETE)
+        console.log("\n[TESTE] Deletando o aluno de teste...");
+        await alunoRepo.deletar(alunoId);
+        const alunoDeletado = await alunoRepo.buscarPorId(alunoId);
+        if (!alunoDeletado) {
+            console.log("> Aluno deletado com sucesso!");
+        } else {
+            console.error("> ERRO: O aluno ainda existe no banco.");
+        }
 
-console.log("\n--- Simulação finalizada ---");
+    } catch (error) {
+        console.error("\n*** UM ERRO OCORREU DURANTE OS TESTES ***");
+        console.error(error);
+    } finally {
+        // Garante que a conexão com o banco será fechada no final
+        const connection = await Database.getConnection();
+        if (connection) {
+            await connection.end();
+            console.log("\nConexão com o banco de dados fechada.");
+        }
+    }
+}
+
+// Executa a função principal
+main();

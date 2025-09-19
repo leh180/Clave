@@ -1,106 +1,59 @@
-# Clave: Plataforma de Aulas de Música - Camada de Domínio
+# Clave: Plataforma de Aulas de Música
 
-Este repositório contém a implementação da **Camada de Domínio** para o projeto da plataforma **Clave**.
+Este repositório contém a implementação das camadas de **Domínio** e **Persistência** para o projeto da plataforma **Clave**.
 
 ## 1. Sobre o Nome: Clave
 
-O nome **Clave** foi escolhido por seu profundo significado no universo musical. A clave (como a Clave de Sol ou de Fá) é o símbolo no início de uma partitura que define a altura das notas musicais. Ela é, literalmente, a "chave" para a leitura e a compreensão da música.
-
-Para a nossa plataforma, o nome simboliza que o projeto é a **chave para conectar alunos e professores**, destravando o potencial musical de cada um e fornecendo o guia certo para a jornada de aprendizado.
+O nome **Clave** foi escolhido por seu profundo significado no universo musical. A clave é a "chave" para a leitura da música, e nossa plataforma é a chave para **conectar alunos e professores**, destravando o potencial musical de cada um.
 
 ## 2. Contexto Acadêmico
 
-Este projeto foi desenvolvido como parte da avaliação da disciplina de Engenharia de Software II, do curso de Ciência da Computação da PUC Minas.
+Este projeto foi desenvolvido para a disciplina de Engenharia de Software II, do curso de Ciência da Computação da PUC Minas, sob orientação do professor João Paulo Coelho Furtado.
 
-- **Instituição:** Pontifícia Universidade Católica de Minas Gerais (PUC Minas)
-- **Curso:** Ciência da Computação
-- **Disciplina:** Engenharia de Software II
-- **Professor:** João Paulo Coelho Furtado
+## 3. Arquitetura e Camadas
 
-## 3. Descrição do Projeto
+O projeto está dividido em camadas para garantir a separação de responsabilidades:
 
-O objetivo do projeto completo é criar uma plataforma web onde alunos possam encontrar, agendar e avaliar aulas com professores de música. O sistema visa facilitar a conexão entre estudantes e especialistas, gerenciando perfis, agendas, negociações e pagamentos de forma intuitiva e segura.
+-   **Domínio (`src/dominio`):** Contém as classes que representam o coração do negócio (`Professor`, `Aluno`, `Aula`, etc.), com suas regras e lógicas internas.
+-   **Persistência (`src/persistencia`):** Responsável por toda a comunicação com o banco de dados. Utiliza o padrão Repository para abstrair as operações de CRUD.
 
-## 4. Contexto da Atividade
+## 4. Banco de Dados
 
-Este código representa a entrega da atividade focada na **implementação da Camada de Domínio** do sistema. O objetivo foi traduzir os requisitos funcionais e o modelo de arquitetura em classes concretas que representam o "coração" do negócio.
+Os scripts para a criação e povoamento do banco de dados PostgreSQL estão na pasta `database/`.
 
-O foco foi em:
-- **Modelar as entidades principais:** `Professor`, `Aluno`, `Aula` e `Avaliacao`.
-- **Garantir o encapsulamento:** Utilizando atributos privados (`#`) para proteger o estado interno dos objetos.
-- **Implementar Regras de Negócio:** Criar métodos que contenham lógicas essenciais do sistema, como o cálculo de médias e a transição de status de uma aula.
+-   **`database/create_tables.sql`**: Script DDL que cria toda a estrutura de tabelas, relacionamentos e restrições.
+-   **`database/insert_data.sql`**: Script DML que insere dados iniciais no banco para testes.
 
-## 5. Tecnologias Utilizadas
-
-- **Runtime:** [Node.js](https://nodejs.org/) (versão 22.19.0 LTS ou superior)
-- **Linguagem:** JavaScript (com sintaxe de Classes do ES6+)
-- **Ambiente de Desenvolvimento:** Visual Studio Code
-
-## 6. Estrutura do Projeto
-
-O projeto está organizado da seguinte forma para garantir a separação de responsabilidades:
-
-```
-clave/
-|
-+-- src/
-|   +-- dominio/
-|       |-- Professor.js
-|       |-- Aluno.js
-|       |-- Aula.js
-|       |-- Avaliacao.js
-|       `-- StatusAula.js
-|
-+-- teste.js          (Arquivo principal para simular e testar o domínio)
-`-- README.md        (Este arquivo)
-```
-
-## 7. Modelo de Domínio Detalhado
-
-A camada de domínio é o núcleo do software, contendo as classes que representam os conceitos do negócio.
-
-### `StatusAula.js`
-- **Responsabilidade:** Funciona como uma enumeração para definir os possíveis estados de uma aula. O uso de um objeto congelado (`Object.freeze`) impede modificações acidentais, garantindo que os status sejam sempre consistentes em todo o sistema.
-
-### `Professor.js`
-- **Responsabilidade:** Representa a entidade Professor. Ele gerencia suas informações pessoais, sua agenda e as avaliações que recebe de seus alunos.
-- **Métodos de Negócio:**
-  - `calcularNotaMedia()`: Implementa a regra de negócio para calcular a média aritmética das notas de todas as avaliações recebidas. Se o professor não tiver avaliações, a média retornada é 0 para evitar erros de divisão por zero.
-
-### `Aluno.js`
-- **Responsabilidade:** Representa a entidade Aluno no sistema.
-
-### `Aula.js`
-- **Responsabilidade:** É uma classe central que conecta um `Professor` a um `Aluno`. Representa um evento de agendamento e controla seu ciclo de vida.
-- **Métodos de Negócio:**
-  - `confirmar()` e `cancelarPorAluno()`: Implementam a "máquina de estados" da aula. Eles contêm lógicas que garantem que o status só possa ser alterado a partir de um estado válido.
-
-### `Avaliacao.js`
-- **Responsabilidade:** Representa o feedback formal que um `Aluno` (autor) fornece sobre um `Professor` após uma aula.
-- **Métodos de Negócio:**
-  - O próprio **construtor** da classe implementa uma regra de negócio crucial: ele dispara um erro (`throw new Error`) se a nota fornecida não estiver no intervalo de 1 a 5, garantindo a integridade dos dados.
-
-## 8. Como Executar
-
-Para testar a camada de domínio e ver as regras de negócio em ação, siga os passos abaixo.
+## 5. Como Executar o Projeto
 
 **Pré-requisitos:**
-- Ter o [Node.js](https://nodejs.org/) instalado na sua máquina.
+-   [Node.js](https://nodejs.org/) instalado.
+-   Um servidor [PostgreSQL](https://www.postgresql.org/) rodando localmente.
 
 **Passos:**
 
-1.  **Clone o repositório** (ou crie os arquivos e pastas conforme a estrutura acima).
-2.  **Abra o terminal** na pasta raiz do projeto (`clave/`).
-3.  **Execute o arquivo de simulação** com o seguinte comando:
-    ```bash
-    node teste.js
-    ```
-4.  O terminal exibirá uma simulação passo a passo, mostrando a criação de professores e alunos, o agendamento de uma aula, a mudança de seu status e o cálculo da média de avaliações de um professor.
+1.  **Configuração do Banco de Dados:**
+    -   Crie um banco de dados no PostgreSQL (ex: `clave_db`).
+    -   Execute o script `database/create_tables.sql` para criar as tabelas.
+    -   Execute o script `database/insert_data.sql` para popular o banco com dados iniciais.
 
-## 9. Grupo
+2.  **Configuração da Aplicação:**
+    -   Clone este repositório.
+    -   Na pasta raiz, instale as dependências: `npm install mysql2`
+    -   Abra o arquivo `src/persistencia/database.js` e **configure seu usuário e senha** do PostgreSQL.
 
-- Ana Cristina Martins Silva
-- Letícia Azevedo Cota Barbosa
-- Lucas Gabriel Almeida Gomes
-- Pedro Henrique Gaioso de Oliveira
-- Victor Lustosa
+3.  **Execução dos Testes:**
+    -   Abra um terminal na pasta raiz do projeto.
+    -   Execute o arquivo de simulação com o comando:
+        ```bash
+        node teste.js
+        ```
+    -   O terminal exibirá o resultado das operações de CRUD (criar, ler, atualizar e deletar) no banco de dados.
+
+## 6. Grupo
+
+-   Ana Cristina Martins Silva
+-   Letícia Azevedo Cota Barbosa
+-   Lucas Gabriel Almeida Gomes
+-   Pedro Henrique Gaioso de Oliveira
+-   Victor Lustosa
