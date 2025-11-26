@@ -1,136 +1,173 @@
-<<<<<<< HEAD
 const Database = require('./database');
-const Professor = require('../dominio/Professor'); // Corrigindo o caminho para a pasta dominio
+const Professor = require('../dominio/Professor');
 
 class ProfessorRepository {
-    
-    // CREATE - Salvar um novo professor
+
+    // CREATE - Salvar Professor com Transação
     async salvar(professor) {
-        const pool = Database.getPool();
-        const sql = 'INSERT INTO professor (nome, email, instrumento, preco_hora) VALUES ($1, $2, $3, $4) RETURNING id';
-        const values = [
-            professor.obterNome(),
-            professor.obterEmail(),
-            professor.obterInstrumento(), // Supondo que exista este método
-            professor.obterPrecoHora()    // Supondo que exista este método
-        ];
+        const client = await Database.getPool().connect();
         
-        const resultado = await pool.query(sql, values);
-        return resultado.rows[0].id;
+        try {
+            await client.query('BEGIN');
+
+            // 1. Inserir Professor (Atualizado com foto e vídeo)
+            const sqlProf = `
+                INSERT INTO professor (nome, email, senha_hash, biografia, valor_base_aula, link_video_demo, foto_url) 
+                VALUES ($1, $2, $3, $4, $5, $6, $7) 
+                RETURNING id
+            `;
+            
+            const valuesProf = [
+                professor.obterNome(),
+                professor.obterEmail(),
+                professor.obterSenhaHash(),
+                // Usando toJSON().bio caso o getter direto não exista, ou acessando direto se implementou
+                professor.toJSON().bio || "", 
+                professor.obterValorBaseAula(),
+                professor.obterLinkVideo() || null, // Novo campo
+                professor.obterFotoUrl() || null    // Novo campo
+            ];
+            
+            const resProf = await client.query(sqlProf, valuesProf);
+            const professorId = resProf.rows[0].id;
+
+            // 2. Vincular Instrumentos
+            for (const nomeInstrumento of professor.obterInstrumentos()) {
+                let resInst = await client.query('SELECT id FROM instrumento WHERE nome = $1', [nomeInstrumento]);
+                let instrumentoId;
+                
+                if (resInst.rows.length > 0) {
+                    instrumentoId = resInst.rows[0].id;
+                } else {
+                    const insertInst = await client.query('INSERT INTO instrumento (nome) VALUES ($1) RETURNING id', [nomeInstrumento]);
+                    instrumentoId = insertInst.rows[0].id;
+                }
+
+                await client.query(
+                    'INSERT INTO professor_instrumento (professor_id, instrumento_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+                    [professorId, instrumentoId]
+                );
+            }
+
+            // 3. Vincular Estilos
+            for (const nomeEstilo of professor.obterEstilos()) {
+                let resEst = await client.query('SELECT id FROM estilo_musical WHERE nome = $1', [nomeEstilo]);
+                let estiloId;
+
+                if (resEst.rows.length > 0) {
+                    estiloId = resEst.rows[0].id;
+                } else {
+                    const insertEst = await client.query('INSERT INTO estilo_musical (nome) VALUES ($1) RETURNING id', [nomeEstilo]);
+                    estiloId = insertEst.rows[0].id;
+                }
+
+                await client.query(
+                    'INSERT INTO professor_estilo (professor_id, estilo_id) VALUES ($1, $2) ON CONFLICT DO NOTHING',
+                    [professorId, estiloId]
+                );
+            }
+
+            await client.query('COMMIT');
+            return professorId;
+
+        } catch (error) {
+            await client.query('ROLLBACK');
+            throw error;
+        } finally {
+            client.release();
+        }
     }
 
-    // READ - Buscar professor por ID
+    // READ - Buscar Todos
+    async buscarTodos() {
+        const pool = Database.getPool();
+        const sql = `
+            SELECT 
+                p.*,
+                ARRAY_REMOVE(ARRAY_AGG(DISTINCT i.nome), NULL) as instrumentos,
+                ARRAY_REMOVE(ARRAY_AGG(DISTINCT em.nome), NULL) as estilos
+            FROM professor p
+            LEFT JOIN professor_instrumento pi ON p.id = pi.professor_id
+            LEFT JOIN instrumento i ON pi.instrumento_id = i.id
+            LEFT JOIN professor_estilo pe ON p.id = pe.professor_id
+            LEFT JOIN estilo_musical em ON pe.estilo_id = em.id
+            GROUP BY p.id
+            ORDER BY p.nome
+        `;
+        const { rows } = await pool.query(sql);
+
+        return rows.map(row => new Professor(
+            row.id, 
+            row.nome, 
+            row.email, 
+            row.senha_hash, 
+            row.biografia, 
+            Number(row.valor_base_aula), 
+            row.instrumentos || [], 
+            row.estilos || [],
+            row.link_video_demo, // Passando o vídeo para o construtor
+            row.foto_url         // Passando a foto para o construtor
+        ));
+    }
+
+    // READ - Buscar por ID
     async buscarPorId(id) {
         const pool = Database.getPool();
-        const sql = 'SELECT * FROM professor WHERE id = $1';
+        const sql = `
+            SELECT 
+                p.*,
+                ARRAY_REMOVE(ARRAY_AGG(DISTINCT i.nome), NULL) as instrumentos,
+                ARRAY_REMOVE(ARRAY_AGG(DISTINCT em.nome), NULL) as estilos
+            FROM professor p
+            LEFT JOIN professor_instrumento pi ON p.id = pi.professor_id
+            LEFT JOIN instrumento i ON pi.instrumento_id = i.id
+            LEFT JOIN professor_estilo pe ON p.id = pe.professor_id
+            LEFT JOIN estilo_musical em ON pe.estilo_id = em.id
+            WHERE p.id = $1
+            GROUP BY p.id
+        `;
         const { rows } = await pool.query(sql, [id]);
         
         if (rows.length === 0) return null;
-        
         const row = rows[0];
-        // Você precisará ajustar os construtores para corresponder aos dados da sua tabela
-        return new Professor(row.id, row.nome, row.email, null, parseFloat(row.preco_hora));
-    }
 
-    // READ - Buscar todos os professores
-    async buscarTodos() {
-        const pool = Database.getPool();
-        const sql = 'SELECT * FROM professor ORDER BY nome';
-        const { rows } = await pool.query(sql);
-        
-        return rows.map(row =>
-            new Professor(row.id, row.nome, row.email, null, parseFloat(row.preco_hora))
+        return new Professor(
+            row.id, 
+            row.nome, 
+            row.email, 
+            row.senha_hash, 
+            row.biografia, 
+            Number(row.valor_base_aula), 
+            row.instrumentos, 
+            row.estilos,
+            row.link_video_demo, // Passando o vídeo
+            row.foto_url         // Passando a foto
         );
     }
-
-    // UPDATE - Atualizar professor
-    async atualizar(professor) {
-        const pool = Database.getPool();
-        const sql = 'UPDATE professor SET nome = $1, email = $2, instrumento = $3, preco_hora = $4 WHERE id = $5';
-        const values = [
-            professor.obterNome(),
-            professor.obterEmail(),
-            professor.obterInstrumento(),
-            professor.obterPrecoHora(),
-            professor.obterId()
-        ];
-        await pool.query(sql, values);
-    }
-
-    // DELETE - Deletar professor
-    async deletar(id) {
-        const pool = Database.getPool();
-        const sql = 'DELETE FROM professor WHERE id = $1';
-        await pool.query(sql, [id]);
-    }
-}
-
-=======
-const Database = require('./database');
-const Professor = require('../dominio/Professor'); // Corrigindo o caminho para a pasta dominio
-
-class ProfessorRepository {
     
-    // CREATE - Salvar um novo professor
-    async salvar(professor) {
+    async buscarPorEmail(email) {
         const pool = Database.getPool();
-        const sql = 'INSERT INTO professor (nome, email, instrumento, preco_hora) VALUES ($1, $2, $3, $4) RETURNING id';
-        const values = [
-            professor.obterNome(),
-            professor.obterEmail(),
-            professor.obterInstrumento(), // Supondo que exista este método
-            professor.obterPrecoHora()    // Supondo que exista este método
-        ];
-        
-        const resultado = await pool.query(sql, values);
-        return resultado.rows[0].id;
-    }
-
-    // READ - Buscar professor por ID
-    async buscarPorId(id) {
-        const pool = Database.getPool();
-        const sql = 'SELECT * FROM professor WHERE id = $1';
-        const { rows } = await pool.query(sql, [id]);
+        const sql = 'SELECT * FROM professor WHERE email = $1';
+        const { rows } = await pool.query(sql, [email]);
         
         if (rows.length === 0) return null;
-        
         const row = rows[0];
-        // Você precisará ajustar os construtores para corresponder aos dados da sua tabela
-        return new Professor(row.id, row.nome, row.email, null, parseFloat(row.preco_hora));
-    }
-
-    // READ - Buscar todos os professores
-    async buscarTodos() {
-        const pool = Database.getPool();
-        const sql = 'SELECT * FROM professor ORDER BY nome';
-        const { rows } = await pool.query(sql);
         
-        return rows.map(row =>
-            new Professor(row.id, row.nome, row.email, null, parseFloat(row.preco_hora))
+        // No login simples, passamos apenas os dados básicos
+        // Se precisar de instrumentos no login, teria que fazer JOIN aqui também
+        return new Professor(
+            row.id, 
+            row.nome, 
+            row.email, 
+            row.senha_hash, 
+            row.biografia, 
+            Number(row.valor_base_aula),
+            [], // Instrumentos vazio
+            [], // Estilos vazio
+            row.link_video_demo,
+            row.foto_url
         );
-    }
-
-    // UPDATE - Atualizar professor
-    async atualizar(professor) {
-        const pool = Database.getPool();
-        const sql = 'UPDATE professor SET nome = $1, email = $2, instrumento = $3, preco_hora = $4 WHERE id = $5';
-        const values = [
-            professor.obterNome(),
-            professor.obterEmail(),
-            professor.obterInstrumento(),
-            professor.obterPrecoHora(),
-            professor.obterId()
-        ];
-        await pool.query(sql, values);
-    }
-
-    // DELETE - Deletar professor
-    async deletar(id) {
-        const pool = Database.getPool();
-        const sql = 'DELETE FROM professor WHERE id = $1';
-        await pool.query(sql, [id]);
     }
 }
 
->>>>>>> 34ba386cc9e0d9669e4166a584f8edc6bdbf0446
 module.exports = ProfessorRepository;

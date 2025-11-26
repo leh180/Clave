@@ -14,7 +14,7 @@ class Aula {
         this.#aluno = aluno;
         this.#dataHora = new Date(dataHora);
         this.#valorAcordado = valorAcordado;
-        this.#status = StatusAula.SOLICITADA; // Toda aula começa com este status
+        this.#status = StatusAula.SOLICITADA;
     }
 
     // --- Métodos de Negócio ---
@@ -35,7 +35,7 @@ class Aula {
             console.error('Ação inválida: Esta aula não pode mais ser cancelada.');
         }
     }
-    
+
     // --- Métodos de Acesso ---
     obterStatus() {
         return this.#status;
@@ -46,8 +46,18 @@ class Aula {
     obterAluno() {
         return this.#aluno;
     }
+    obterId() {
+        return this.#id;
+    }
 
-    
+    obterDataHora() {
+        return this.#dataHora;
+    }
+
+    obterValorAcordado() {
+        return this.#valorAcordado;
+    }
+
 }
 
 module.exports = Aula;

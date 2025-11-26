@@ -1,29 +1,34 @@
 class Avaliacao {
     #id;
-    #autor;
-    #professorAvaliado;
+    #aulaId;
+    #alunoId;
+    #professorId;
     #nota;
     #comentario;
 
-    constructor(id, autor, professorAvaliado, nota, comentario) {
-        // Regra de negócio direto no construtor para garantir a integridade do objeto
-        if (nota < 1 || nota > 5) {
-            throw new Error("A nota da avaliação deve ser um valor entre 1 e 5.");
-        }
+    constructor(id, aulaId, alunoId, professorId, nota, comentario) {
         this.#id = id;
-        this.#autor = autor;
-        this.#professorAvaliado = professorAvaliado;
+        this.#aulaId = aulaId;
+        this.#alunoId = alunoId;
+        this.#professorId = professorId;
         this.#nota = nota;
         this.#comentario = comentario;
     }
 
-    // --- Métodos de Acesso ---
-    obterNota() {
-        return this.#nota;
-    }
+    obterId() { return this.#id; }
+    obterAulaId() { return this.#aulaId; }
+    obterAlunoId() { return this.#alunoId; }
+    obterProfessorId() { return this.#professorId; }
+    obterNota() { return this.#nota; }
+    obterComentario() { return this.#comentario; }
 
-    obterComentario() {
-        return this.#comentario;
+    toJSON() {
+        return {
+            id: this.#id,
+            nota: this.#nota,
+            comentario: this.#comentario,
+            aulaId: this.#aulaId
+        };
     }
 }
 
