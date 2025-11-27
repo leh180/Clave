@@ -1,11 +1,13 @@
--- Limpa o banco de dados (DROP em ordem reversa de dependência)
--- O CASCADE garante que se uma tabela depende da outra, ela cai junto.
+-- Configuração de codificação para evitar erros de acentuação
+SET CLIENT_ENCODING TO 'UTF8';
+
+-- 1. LIMPEZA TOTAL (Apaga tabelas antigas para recriar do zero)
 DROP TABLE IF EXISTS mensagem CASCADE;
 DROP TABLE IF EXISTS avaliacao CASCADE;
 DROP TABLE IF EXISTS pagamento CASCADE;
 DROP TABLE IF EXISTS aula CASCADE;
 DROP TABLE IF EXISTS disponibilidade CASCADE;
-DROP TABLE IF EXISTS curso CASCADE; -- Adicionado aqui para garantir limpeza
+DROP TABLE IF EXISTS curso CASCADE;
 DROP TABLE IF EXISTS professor_estilo CASCADE;
 DROP TABLE IF EXISTS professor_instrumento CASCADE;
 DROP TABLE IF EXISTS status_aula CASCADE;
@@ -14,7 +16,9 @@ DROP TABLE IF EXISTS instrumento CASCADE;
 DROP TABLE IF EXISTS professor CASCADE;
 DROP TABLE IF EXISTS aluno CASCADE;
 
--- 1. Tabelas de Domínio/Catálogo
+-- 2. CRIAÇÃO DAS TABELAS
+
+-- Tabelas Auxiliares (Catálogos)
 CREATE TABLE instrumento (
     id SERIAL PRIMARY KEY,
     nome VARCHAR(50) NOT NULL UNIQUE
@@ -30,7 +34,7 @@ CREATE TABLE status_aula (
     nome VARCHAR(50) NOT NULL UNIQUE
 );
 
--- 2. Usuários (Aluno e Professor)
+-- Usuários
 CREATE TABLE aluno (
     id SERIAL PRIMARY KEY,
     nome VARCHAR(100) NOT NULL,
@@ -47,13 +51,13 @@ CREATE TABLE professor (
     email VARCHAR(100) NOT NULL UNIQUE,
     senha_hash VARCHAR(255) NOT NULL,
     biografia TEXT,
-    valor_base_aula DECIMAL(10, 2) NOT NULL, -- Pode ser um valor padrão "a partir de"
+    valor_base_aula DECIMAL(10, 2) NOT NULL,
     foto_url TEXT,
     link_video_demo TEXT,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 3. Relacionamentos N:N
+-- Relacionamentos N:N
 CREATE TABLE professor_instrumento (
     professor_id INTEGER REFERENCES professor(id) ON DELETE CASCADE,
     instrumento_id INTEGER REFERENCES instrumento(id) ON DELETE CASCADE,
@@ -66,8 +70,7 @@ CREATE TABLE professor_estilo (
     PRIMARY KEY (professor_id, estilo_id)
 );
 
--- 4. Produtos (Gigs/Cursos)
--- Esta é a tabela principal do estilo "Fiverr"
+-- Produtos (Cursos/Gigs)
 CREATE TABLE curso (
     id SERIAL PRIMARY KEY,
     professor_id INTEGER REFERENCES professor(id) ON DELETE CASCADE,
@@ -80,43 +83,42 @@ CREATE TABLE curso (
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 5. Agenda e Disponibilidade
+-- Agenda
 CREATE TABLE disponibilidade (
     id SERIAL PRIMARY KEY,
     professor_id INTEGER REFERENCES professor(id) ON DELETE CASCADE,
-    dia_semana INTEGER NOT NULL, -- 0=Domingo, 1=Segunda, ... 6=Sábado
+    dia_semana INTEGER NOT NULL, -- 0=Dom, 1=Seg, etc.
     hora_inicio TIME NOT NULL,
     hora_fim TIME NOT NULL
 );
 
--- 6. Aulas (Transação)
+-- Transações (Aulas e Pagamentos)
 CREATE TABLE aula (
     id SERIAL PRIMARY KEY,
     aluno_id INTEGER REFERENCES aluno(id) ON DELETE SET NULL,
     professor_id INTEGER REFERENCES professor(id) ON DELETE SET NULL,
-    curso_id INTEGER REFERENCES curso(id) ON DELETE SET NULL, -- IMPORTANTE: Saber qual "Gig" foi comprado
+    curso_id INTEGER REFERENCES curso(id) ON DELETE SET NULL,
     data_hora TIMESTAMP NOT NULL,
     duracao_minutos INTEGER DEFAULT 60,
     status_id INTEGER REFERENCES status_aula(id),
-    modalidade VARCHAR(20) CHECK (modalidade IN ('online', 'presencial')),
+    modalidade VARCHAR(20),
     valor_acordado DECIMAL(10, 2) NOT NULL,
     link_reuniao TEXT,
     endereco_aula TEXT,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 7. Financeiro
 CREATE TABLE pagamento (
     id SERIAL PRIMARY KEY,
     aula_id INTEGER UNIQUE REFERENCES aula(id) ON DELETE CASCADE,
     valor DECIMAL(10, 2) NOT NULL,
-    status VARCHAR(20) CHECK (status IN ('pendente', 'aprovado', 'recusado', 'estornado')),
+    status VARCHAR(20),
     metodo VARCHAR(50),
     data_pagamento TIMESTAMP,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 8. Social
+-- Social
 CREATE TABLE avaliacao (
     id SERIAL PRIMARY KEY,
     aula_id INTEGER UNIQUE REFERENCES aula(id) ON DELETE CASCADE,
@@ -130,7 +132,7 @@ CREATE TABLE avaliacao (
 CREATE TABLE mensagem (
     id SERIAL PRIMARY KEY,
     aula_id INTEGER REFERENCES aula(id) ON DELETE CASCADE,
-    remetente_tipo VARCHAR(10) CHECK (remetente_tipo IN ('ALUNO', 'PROFESSOR')),
+    remetente_tipo VARCHAR(10),
     texto TEXT NOT NULL,
     lida BOOLEAN DEFAULT FALSE,
     criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
