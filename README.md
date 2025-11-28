@@ -64,7 +64,7 @@ O projeto segue uma arquitetura em camadas para garantir a separação de respon
     - **Banco de Dados:** PostgreSQL
     - **Driver de Conexão:** `pg`
 
-## 4. Estrutura do Projeto
+## 5. Estrutura do Projeto
 
 ```
 clave-projeto/
@@ -87,7 +87,7 @@ clave-projeto/
 `-- README.md
 ```
 
-## 5. Modelo de Domínio Detalhado
+## 6. Modelo de Domínio Detalhado
 
 A camada de domínio modela os conceitos de negócio como objetos, encapsulando dados e regras.
 
@@ -106,7 +106,7 @@ A camada de domínio modela os conceitos de negócio como objetos, encapsulando 
 - **Métodos de Negócio:**
     - O **construtor** da classe implementa uma regra de validação crucial: ele dispara um erro se a nota fornecida não estiver no intervalo de 1 a 5. Isso é um exemplo de "invariante de domínio", uma regra que deve ser sempre verdadeira para que o objeto seja considerado válido, garantindo a integridade dos dados desde sua criação.
 
-## 6. Análise do Script de Teste (`teste.js`)
+## 7. Análise do Script de Teste (`teste.js`)
 
 O arquivo `teste.js` não é um teste unitário formal, mas sim um **script de simulação e integração**. Seu objetivo é verificar se as camadas de Domínio e Persistência estão funcionando corretamente em conjunto, executando um fluxo completo de operações no banco de dados.
 
@@ -143,7 +143,7 @@ O que cada etapa do script está testando:
     -   **O que testa:**
         -   A capacidade do sistema de liberar recursos de forma segura, fechando o pool de conexões com o banco para evitar que conexões fiquem "presas" e consumindo memória.
 
-## 7. Como Executar
+## 8. Como Executar
 
 **Pré-requisitos:**
 -   [Node.js](https://nodejs.org/) instalado.
@@ -168,7 +168,7 @@ O que cada etapa do script está testando:
         node teste.js
         ```
 
-## 8. Vídeos de Entrega e Demonstração
+## 9. Vídeos de Entrega e Demonstração
 
 Como parte da avaliação final da disciplina, disponibilizamos dois vídeos que detalham o processo de engenharia de software e demonstram a plataforma em funcionamento.
 
@@ -193,7 +193,7 @@ Este vídeo foca exclusivamente na navegação e uso do sistema:
 * Apresentação de funcionalidades extras implementadas.
 * Validação prática das regras de negócio.
 
-## 9. Grupo
+## 10. Grupo
 
 -   Ana Cristina Martins Silva
 -   Letícia Azevedo Cota Barbosa
