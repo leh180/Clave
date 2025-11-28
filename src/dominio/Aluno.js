@@ -2,38 +2,33 @@ class Aluno {
     #id;
     #nome;
     #email;
+    #telefone;
     #aulasAgendadas;
 
-    constructor(id, nome, email) {
+    constructor(id, nome, email, telefone = null) {
         this.#id = id;
         this.#nome = nome;
         this.#email = email;
+        this.#telefone = telefone;
         this.#aulasAgendadas = [];
     }
 
-    /**
-     * Adiciona uma nova aula à lista de aulas do aluno.
-     * @param {Aula} aula
-     */
     adicionarAula(aula) {
         this.#aulasAgendadas.push(aula);
     }
 
-    // --- Métodos de Acesso ---
-    obterId() {
-        return this.#id;
-    }
-    obterNome() {
-        return this.#nome;
-    }
-    obterEmail(){
-        return this.#email;
-    }
-    obterAulasAgendadas() {
-        return this.#aulasAgendadas;
-    }
-    alterarNome(novoNome){
+    obterId() { return this.#id; }
+    obterNome() { return this.#nome; }
+    obterEmail() { return this.#email; }
+    obterTelefone() { return this.#telefone; }
+    obterAulasAgendadas() { return this.#aulasAgendadas; }
+
+    alterarNome(novoNome) {
         this.#nome = novoNome;
+    }
+
+    alterarTelefone(novoTelefone) {
+        this.#telefone = novoTelefone;
     }
 }
 
