@@ -168,7 +168,32 @@ O que cada etapa do script está testando:
         node teste.js
         ```
 
-## 8. Grupo
+## 8. Vídeos de Entrega e Demonstração
+
+Como parte da avaliação final da disciplina, disponibilizamos dois vídeos que detalham o processo de engenharia de software e demonstram a plataforma em funcionamento.
+
+### 🎥 Vídeo 1: Apresentação do Projeto (Slides)
+> **[Clique aqui para assistir à Apresentação](https://youtu.be/yBiGMMM-ETs)**
+> 📄 **[Clique aqui para acessar o PDF dos Slides](Clave_Apresentação.pdf)**
+
+Este vídeo apresenta a documentação e as decisões técnicas do projeto, cobrindo:
+* **a) Introdução e Objetivo:** Contexto do problema, motivação e público-alvo da plataforma Clave.
+* **b) Requisitos e Modelagem:** Principais *user stories* e diagramas UML utilizados (Casos de Uso, Classes e Sequência).
+* **c) Arquitetura:** Diagrama arquitetural final, padrões adotados (Camadas, princípios de DDD, MVC) e justificativas de design.
+* **d) Implementação:** Tecnologias, frameworks e o fluxo de chamadas (API → Domínio → Persistência).
+* **e) Testes e Qualidade:** Estratégia de testes e ferramentas utilizadas.
+* **f) Demonstração:** Breve demonstração funcional da aplicação.
+* **g) Conclusões:** Principais aprendizados, melhorias futuras e o que faríamos diferente.
+
+### 🖥️ Vídeo 2: Demonstração Funcional
+> **[Clique aqui para assistir à Demonstração](https://youtu.be/l3K0f76PhaQ)**
+
+Este vídeo foca exclusivamente na navegação e uso do sistema:
+* Execução dos fluxos principais do sistema.
+* Apresentação de funcionalidades extras implementadas.
+* Validação prática das regras de negócio.
+
+## 9. Grupo
 
 -   Ana Cristina Martins Silva
 -   Letícia Azevedo Cota Barbosa
